@@ -1,0 +1,11 @@
+.git
+.gitignore
+.github
+AGENTS.md
+test
+*.vsix
+.vscode-test
+test-real
+.vscode-test.mjs
+node_modules
+package-lock.json

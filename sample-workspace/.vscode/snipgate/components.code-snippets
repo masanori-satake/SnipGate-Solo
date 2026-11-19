@@ -1,0 +1,12 @@
+{
+  // Only for files under src/components/ (via the rule in .vscode/settings.json).
+  "React Component": {
+    "prefix": "comp",
+    "body": [
+      "export function ${1:Name}() {",
+      "\treturn <div>$0</div>;",
+      "}"
+    ],
+    "description": "[rule-gated] component skeleton — should appear ONLY under src/components/"
+  }
+}

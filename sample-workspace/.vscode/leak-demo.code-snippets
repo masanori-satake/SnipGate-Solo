@@ -1,0 +1,11 @@
+{
+  // LEAK CHECK: this file sits directly in .vscode/, so VS Code loads it
+  // natively and "leakcheck" appears in EVERY file of this workspace.
+  // Compare with the rule-gated snippets in .vscode/snipgate/,
+  // which should appear only where their rule matches.
+  "Leak Check": {
+    "prefix": "leakcheck",
+    "body": "// leakcheck: VS Code showed this snippet natively, everywhere",
+    "description": "[native] appears everywhere — this is the behaviour the extension gates"
+  }
+}

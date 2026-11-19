@@ -1,0 +1,13 @@
+{
+  // NATIVE PROBE: standard VS Code snippet with a glob `include`.
+  // It should appear ONLY in *.test.ts files IF this VS Code build
+  // supports the file-pattern scope. Placed directly in .vscode/,
+  // so VS Code loads the file natively — the include property alone
+  // decides where it shows. The real-VS Code suite reports the result.
+  "Native Probe": {
+    "prefix": "nativeprobe",
+    "body": "// nativeprobe",
+    "description": "[native probe] include: **/*.test.ts",
+    "include": ["**/*.test.ts"]
+  }
+}

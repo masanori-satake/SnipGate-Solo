@@ -1,0 +1,1 @@
+{"editor.tabCompletion":"on","snipGate.rules":[{"patterns":["\\.test\\.ts$"],"snippetFile":".vscode/snipgate/test.code-snippets"},{"patterns":["^src/components/"],"snippetFile":".vscode/snipgate/components.code-snippets"},{"patterns":["\\.ts$"],"snippetFile":".vscode/snipgate/missing-demo.code-snippets"}]}

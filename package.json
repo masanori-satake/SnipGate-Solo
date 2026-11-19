@@ -1,0 +1,93 @@
+{
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "categories": [
+    "Snippets",
+    "Other"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "category": "SnipGate",
+        "command": "snipGate.showMatches",
+        "title": "%command.showMatches.title%"
+      },
+      {
+        "category": "SnipGate",
+        "command": "snipGate.reload",
+        "title": "%command.reload.title%"
+      }
+    ],
+    "configuration": {
+      "properties": {
+        "snipGate.rules": {
+          "default": [],
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "patterns": {
+                "items": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "markdownDescription": "%config.rules.patterns.description%",
+                "minItems": 1,
+                "type": "array"
+              },
+              "snippetFile": {
+                "markdownDescription": "%config.rules.snippetFile.description%",
+                "minLength": 1,
+                "type": "string"
+              }
+            },
+            "required": [
+              "patterns",
+              "snippetFile"
+            ],
+            "type": "object"
+          },
+          "markdownDescription": "%config.rules.description%",
+          "scope": "resource",
+          "type": "array"
+        }
+      },
+      "title": "%config.title%"
+    }
+  },
+  "description": "%extension.description%",
+  "displayName": "SnipGate-Solo",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "license": "MIT",
+  "main": "./src/extension.js",
+  "name": "snipgate-solo",
+  "publisher": "masanori-satake",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "test:real": "vscode-test --code-version 1.147.0"
+  },
+  "version": "1.0.0",
+  "devDependencies": {
+    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-electron": "^2.5.2",
+    "mocha": "^11.0.0"
+  },
+  "icon": "icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/masanori-satake/SnipGate-Solo"
+  },
+  "homepage": "https://github.com/masanori-satake/SnipGate-Solo#readme",
+  "bugs": {
+    "url": "https://github.com/masanori-satake/SnipGate-Solo/issues"
+  },
+  "keywords": [
+    "snippets",
+    "regex",
+    "path",
+    "gate",
+    "multi-root"
+  ]
+}

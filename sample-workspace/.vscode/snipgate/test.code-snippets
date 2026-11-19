@@ -1,0 +1,20 @@
+{
+  // Only for *.test.ts files (via the rule in .vscode/settings.json).
+  // This file lives in a SUBFOLDER of .vscode on purpose: files placed
+  // directly in .vscode/*.code-snippets are loaded by VS Code itself
+  // and would appear everywhere, defeating the gate.
+  "Test Block": {
+    "prefix": "testblock",
+    "body": [
+      "test('${1:description}', () => {",
+      "\t$0",
+      "});"
+    ],
+    "description": "[rule-gated] test block — should appear ONLY in *.test.ts"
+  },
+  "Expect Equal": {
+    "prefix": "expecteq",
+    "body": "expect(${1:actual}).toEqual(${2:expected});$0",
+    "description": "[rule-gated] expect().toEqual() — should appear ONLY in *.test.ts"
+  }
+}
