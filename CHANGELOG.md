@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.1] - 2026-11-19
+
+- Release infrastructure only, no functional change: added the `scripts/check-version.js` version-consistency check that the shared CI workflow runs (it was missing in 1.0.0, so the Code Quality workflow failed on the version-check step), plus the README version line it requires.
+
+---
+
+- リリース基盤のみの修正で、機能変更はありません：共通 CI ワークフローが実行する版整合性チェック `scripts/check-version.js` を追加しました（1.0.0 では欠けていて、コード品質ワークフローが版チェックのステップで失敗していました）。あわせて、そのチェックが要求する README の版表記も追加しました。
+
 ## [1.0.0] - 2026-11-19
 
 - First public release (Visual Studio Marketplace, Open VSX, GitHub Release). Rule-gated snippets: define `snipGate.rules` in settings.json — each rule tests one or more regular expressions against the workspace-relative file path and points to a `.code-snippets` file by a relative path; only matching files offer that file's snippets. Resource-scoped rules close per workspace folder in multi-root workspaces, and a rule whose snippet file does not exist in a folder is silently skipped for that folder. Commands report the per-rule verdict for the current file and reload snippet files; snippet `scope` is honoured. Full English/Japanese UI. 100% local, no tracking, zero runtime dependencies.

@@ -9,3 +9,4 @@ test-real
 .vscode-test.mjs
 node_modules
 package-lock.json
+scripts

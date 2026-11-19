@@ -2,6 +2,8 @@
 
 Show snippets **only where they belong**.
 
+Version 1.0.1 — first release (1.0.1 adds the version-check script for CI; no functional change): regex rules in settings.json gate whole snippet files per workspace folder.
+
 Standard VS Code snippets are scoped by language (and, in recent VS Code
 versions, by per-snippet glob `include`/`exclude`). SnipGate-Solo takes a
 different shape:
