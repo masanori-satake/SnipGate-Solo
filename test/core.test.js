@@ -47,6 +47,45 @@ test('ruleMatches: invalid regex never matches and is reported, others still wor
   assert.equal(core.ruleMatches(rule, 'a.js'), false);
 });
 
+test('compilePatterns rejects nested quantifiers but keeps ordinary patterns', () => {
+  for (const bad of ['([a-z]+)+\\.tsx$', '(a*)*', '(a+)+$', '((a)+)+']) {
+    const { regexes, errors } = core.compilePatterns([bad]);
+    assert.equal(regexes.length, 0, bad);
+    assert.equal(errors.length, 1, bad);
+    assert.match(errors[0], /nested quantifiers/);
+  }
+  for (const good of [
+    '\\.test\\.ts$',
+    '^src/components/',
+    '(^|/)vite\\.config\\.ts$',
+    '(a|b)+',
+    'src/(foo|bar)/',
+    '[a-z]+\\.ts$',
+  ]) {
+    const { regexes, errors } = core.compilePatterns([good]);
+    assert.equal(errors.length, 0, good);
+    assert.equal(regexes.length, 1, good);
+  }
+});
+
+test('compilePatterns rejects overlong patterns', () => {
+  const { regexes, errors } = core.compilePatterns(['a'.repeat(513)]);
+  assert.equal(regexes.length, 0);
+  assert.match(errors[0], /longer than 512/);
+});
+
+test('ruleMatchesCompiled matches with pre-compiled regexes', () => {
+  const { regexes } = core.compilePatterns(['\\.test\\.ts$']);
+  assert.equal(core.ruleMatchesCompiled(regexes, 'src/a.test.ts'), true);
+  assert.equal(core.ruleMatchesCompiled(regexes, 'src/a.ts'), false);
+});
+
+test('parseSnippets preserves commas inside string literals', () => {
+  const text = `{ "Arr": { "prefix": "arr", "body": "arr = [1,]; s = \\",]\\"; o = \\",}\\";" } }`;
+  const snippets = core.parseSnippets(text);
+  assert.equal(snippets[0].body, 'arr = [1,]; s = ",]"; o = ",}";');
+});
+
 test('validateRule catches missing fields', () => {
   assert.deepEqual(core.validateRule({ patterns: ['a'], snippetFile: 'f' }), []);
   assert.ok(core.validateRule({ patterns: [], snippetFile: 'f' }).length > 0);
@@ -92,13 +131,19 @@ test('snippetAppliesToLanguage honours scope, empty scope = all', () => {
   assert.equal(core.snippetAppliesToLanguage({ scope: ['typescript'] }, 'javascript'), false);
 });
 
-test('joinSnippetPath joins folder and relative path, allowing ..', () => {
+test('joinSnippetPath joins folder and relative path, resolving ..', () => {
   assert.equal(
     core.joinSnippetPath('/ws/app', '.vscode/snipgate/test.code-snippets'),
     '/ws/app/.vscode/snipgate/test.code-snippets',
   );
+  // .. is allowed (pointing outside the folder is a feature) and resolved,
+  // so the result is the canonical path of the shared file.
   assert.equal(
     core.joinSnippetPath('C:\\ws\\app', '../shared/common.code-snippets'),
-    'C:/ws/app/../shared/common.code-snippets',
+    'C:/ws/shared/common.code-snippets',
+  );
+  assert.equal(
+    core.joinSnippetPath('/ws/app', '../shared/common.code-snippets'),
+    '/ws/shared/common.code-snippets',
   );
 });

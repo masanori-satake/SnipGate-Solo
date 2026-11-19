@@ -7,7 +7,13 @@ const core = require('./core');
 
 let output;
 const snippetCache = new Map(); // fsPath -> { mtimeMs, snippets }
+const failedFiles = new Map(); // fsPath -> mtimeMs of a version that failed to parse
 const loggedProblems = new Set(); // dedupe noisy logs
+
+// Real .code-snippets files are kilobytes. The cap keeps a rule that
+// (accidentally or maliciously) points at a huge workspace file from
+// loading it into the shared Extension Host on every keystroke.
+const MAX_SNIPPET_FILE_BYTES = 1024 * 1024;
 
 function log(message) {
   if (output) output.appendLine(message);
@@ -19,6 +25,12 @@ function logOnce(key, message) {
   log(message);
 }
 
+function skipError(message) {
+  const e = new Error(message);
+  e.code = 'SNIPGATE_SKIP';
+  return e;
+}
+
 async function loadSnippets(fsPath) {
   let stat;
   try {
@@ -26,19 +38,42 @@ async function loadSnippets(fsPath) {
   } catch {
     return null; // does not exist in this root: caller skips the rule silently
   }
+  if (!stat.isFile()) {
+    logOnce(`not-file-${fsPath}`, `${fsPath} is not a regular file; skipped`);
+    throw skipError('not a regular file');
+  }
+  if (stat.size > MAX_SNIPPET_FILE_BYTES) {
+    logOnce(
+      `too-large-${fsPath}`,
+      `${fsPath} is ${stat.size} bytes (limit ${MAX_SNIPPET_FILE_BYTES}); skipped`,
+    );
+    throw skipError('snippet file too large');
+  }
   const cached = snippetCache.get(fsPath);
   if (cached && cached.mtimeMs === stat.mtimeMs) return cached.snippets;
-  const text = await fs.readFile(fsPath, 'utf8');
-  const snippets = core.parseSnippets(text); // throws on bad JSON: caller skips
-  snippetCache.set(fsPath, { mtimeMs: stat.mtimeMs, snippets });
-  return snippets;
+  if (failedFiles.get(fsPath) === stat.mtimeMs) {
+    // This exact version already failed once: do not re-read and re-parse
+    // it on every completion request while the user keeps typing.
+    throw skipError('this file version previously failed to parse');
+  }
+  try {
+    const text = await fs.readFile(fsPath, 'utf8');
+    const snippets = core.parseSnippets(text); // throws on bad JSON: caller skips
+    snippetCache.set(fsPath, { mtimeMs: stat.mtimeMs, snippets });
+    failedFiles.delete(fsPath);
+    return snippets;
+  } catch (e) {
+    failedFiles.set(fsPath, stat.mtimeMs);
+    throw e;
+  }
 }
 
 /**
  * Evaluate the rules that apply to a document.
  * Returns { relPath, folder, evaluations } where each evaluation is
  * { rule, matched, status, snippets } and status is one of
- * 'ok' | 'no-match' | 'missing-file' | 'parse-error' | 'invalid-rule'.
+ * 'ok' | 'no-match' | 'missing-file' | 'parse-error' | 'unreadable-file'
+ * | 'invalid-rule'.
  */
 async function evaluateDocument(document) {
   const folder = vscode.workspace.getWorkspaceFolder(document.uri);
@@ -58,11 +93,11 @@ async function evaluateDocument(document) {
       evaluations.push({ rule, matched: false, status: 'invalid-rule', snippets: [] });
       continue;
     }
-    const { errors } = core.compilePatterns(rule.patterns);
+    const { regexes, errors } = core.compilePatterns(rule.patterns);
     for (const error of errors) {
       logOnce(`rule-${index}-${error}`, `[rule ${index}] ${error}`);
     }
-    if (!core.ruleMatches(rule, relPath)) {
+    if (!core.ruleMatchesCompiled(regexes, relPath)) {
       evaluations.push({ rule, matched: false, status: 'no-match', snippets: [] });
       continue;
     }
@@ -71,9 +106,18 @@ async function evaluateDocument(document) {
     try {
       snippets = await loadSnippets(snippetFsPath);
     } catch (e) {
+      if (e && e.code === 'SNIPGATE_SKIP') {
+        // Not a regular file / too large / known-bad version: the specific
+        // reason was already logged once inside loadSnippets.
+        evaluations.push({ rule, matched: true, status: 'unreadable-file', snippets: [] });
+        continue;
+      }
+      // Do not log e.message: V8 parse errors embed the start of the file,
+      // and a rule may point outside the workspace — keep file contents
+      // out of the log.
       logOnce(
         `parse-${snippetFsPath}`,
-        `[rule ${index}] could not parse ${rule.snippetFile}: ${e.message}`,
+        `[rule ${index}] could not parse ${rule.snippetFile} (${e.name || 'Error'})`,
       );
       evaluations.push({ rule, matched: true, status: 'parse-error', snippets: [] });
       continue;
@@ -113,9 +157,10 @@ const provider = {
           const item = new vscode.CompletionItem(prefix, vscode.CompletionItemKind.Snippet);
           item.insertText = new vscode.SnippetString(snippet.body);
           item.detail = `${snippet.name} — ${ev.rule.snippetFile}`;
-          item.documentation = new vscode.MarkdownString(
-            snippet.description || snippet.name,
-          );
+          // Plain string, not MarkdownString: descriptions come from
+          // workspace files, and Markdown would let a description embed a
+          // remote image (a tracking beacon) in the completion details.
+          item.documentation = snippet.description || snippet.name;
           item.filterText = prefix;
           if (wordRange) item.range = wordRange;
           items.push(item);
@@ -132,7 +177,15 @@ async function showMatches() {
     void vscode.window.showInformationMessage('SnipGate: no active editor.');
     return;
   }
-  const { relPath, folder, evaluations } = await evaluateDocument(editor.document);
+  let result;
+  try {
+    result = await evaluateDocument(editor.document);
+  } catch (e) {
+    log(`showMatches failed: ${e.name || 'Error'}`);
+    void vscode.window.showInformationMessage('SnipGate: could not evaluate rules.');
+    return;
+  }
+  const { relPath, folder, evaluations } = result;
   output.show(true);
   log('--- Show Matching Rules ---');
   if (!folder) {
@@ -145,9 +198,14 @@ async function showMatches() {
   log(`file: ${relPath}  (folder: ${folder.name})`);
   if (evaluations.length === 0) log('no rules configured for this folder.');
   evaluations.forEach((ev, i) => {
-    const patterns = Array.isArray(ev.rule.patterns) ? ev.rule.patterns.join(' | ') : '?';
+    // ev.rule is the raw settings value and can be null or malformed
+    // (validateRule passes it through for invalid-rule evaluations).
+    const patterns =
+      ev.rule && Array.isArray(ev.rule.patterns) ? ev.rule.patterns.join(' | ') : '?';
+    const target =
+      ev.rule && typeof ev.rule.snippetFile === 'string' ? ev.rule.snippetFile : '?';
     log(
-      `[rule ${i}] ${ev.status}  patterns: ${patterns}  -> ${ev.rule.snippetFile}` +
+      `[rule ${i}] ${ev.status}  patterns: ${patterns}  -> ${target}` +
         (ev.status === 'ok' ? `  (${ev.snippets.length} snippets)` : ''),
     );
   });
@@ -170,6 +228,7 @@ function activate(context) {
   context.subscriptions.push(
     vscode.commands.registerCommand('snipGate.reload', () => {
       snippetCache.clear();
+      failedFiles.clear();
       loggedProblems.clear();
       void vscode.window.showInformationMessage('SnipGate: snippet cache cleared.');
     }),
@@ -178,11 +237,16 @@ function activate(context) {
   // Editing a snippet file or the settings takes effect without a reload:
   // the cache is keyed by mtime, and configuration is read per request.
   const watcher = vscode.workspace.createFileSystemWatcher('**/*.code-snippets');
-  const invalidate = (uri) => snippetCache.delete(uri.fsPath);
-  watcher.onDidChange(invalidate);
-  watcher.onDidCreate(invalidate);
-  watcher.onDidDelete(invalidate);
-  context.subscriptions.push(watcher);
+  const invalidate = (uri) => {
+    snippetCache.delete(uri.fsPath);
+    failedFiles.delete(uri.fsPath);
+  };
+  context.subscriptions.push(
+    watcher,
+    watcher.onDidChange(invalidate),
+    watcher.onDidCreate(invalidate),
+    watcher.onDidDelete(invalidate),
+  );
 
   log('SnipGate-Solo activated.');
 }

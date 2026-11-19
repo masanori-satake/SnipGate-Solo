@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.4] - 2026-11-20
+
+- Hardening and correctness fixes from a full re-audit (no feature changes): rule patterns with nested quantifiers (e.g. `([a-z]+)+`) are now rejected with a reported error instead of being able to stall the shared Extension Host through catastrophic backtracking, and patterns are capped at 512 characters. Snippet files are read only when they are regular files of at most 1 MB, and a file version that failed to parse is not re-read on every keystroke. The JSONC parser no longer removes commas inside string literals (snippet bodies containing `",]"` or `",}"` were silently corrupted). Snippet descriptions are shown as plain text instead of Markdown, so a description cannot embed a remote image. Parse-error logs no longer include the start of the file's contents. `Show Matching Rules` no longer fails on a malformed (e.g. `null`) rule entry. Patterns are compiled once per evaluation instead of twice, snippet paths are normalised (`..` resolved) so watcher invalidation and the cache agree, and the extension now explicitly declares that it does not support untrusted or virtual workspaces. The README privacy section also states explicitly that snippet bodies use the full VS Code snippet syntax.
+
+---
+
+- 全体の再点検で見つかった堅牢化と正確性の修正です（機能変更はありません）。入れ子の量指定子を持つルールパターン（例：`([a-z]+)+`）は、壊滅的なバックトラッキングで拡張ホスト全体を止めうるため、エラーとして報告して拒否するようにし、パターンの長さにも上限（512文字）を設けました。スニペットファイルは通常ファイルで1MB以下のときだけ読み、パースに失敗した版はキー入力のたびに読み直さないようにしました。JSONC パーサが文字列リテラル内のカンマを消してしまう問題も直しました（本文に `",]"` や `",}"` を含むスニペットが黙って壊れていました）。スニペットの説明は Markdown ではなくプレーンテキストで表示し、説明文にリモート画像を埋め込めないようにしました。パースエラーのログにファイル内容の冒頭が含まれないようにし、`Show Matching Rules` が壊れたルール項目（`null` など）で失敗しないようにしました。あわせて、パターンのコンパイルを評価ごとに1回にし、スニペットパスの正規化（`..` の解決）でウォッチャー無効化とキャッシュを一致させ、信頼されていないワークスペースと仮想ワークスペースをサポートしないことを明示しました。README のプライバシー節には、スニペット本文が VS Code のスニペット構文そのものであることも明記しました。
+
 ## [1.0.3] - 2026-11-19
 
 - Documentation only, no functional change: recorded the Kiro verification results (2026-11-19, performed by the author in Kiro with the prepared checklist — steps 1–6 all OK: gated candidates, silent skip, the show-matches verdicts, Kiro auto-loading files placed directly in `.vscode/` just like VS Code, and the native glob `include` behaving the same; the optional multi-root step is still unconfirmed). The README Roadmap and Requirements now state Kiro as verified, and the full results were appended to `docs/kiro-test-data.md`.

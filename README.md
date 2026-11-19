@@ -1,6 +1,6 @@
 # SnipGate-Solo
 
-[![Version](https://img.shields.io/badge/version-v1.0.3-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-v1.0.4-blue.svg)](package.json)
 [![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/masanori-satake.snipgate-solo.svg?label=Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=masanori-satake.snipgate-solo)
 [![Open VSX](https://img.shields.io/open-vsx/v/masanori-satake/snipgate-solo?label=Open%20VSX)](https://open-vsx.org/extension/masanori-satake/snipgate-solo)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/masanori-satake/SnipGate-Solo)](https://github.com/masanori-satake/SnipGate-Solo/releases)
@@ -18,7 +18,7 @@
 
 Standard snippets are scoped by language (and, in recent VS Code versions, by per-snippet glob `include`/`exclude`). SnipGate-Solo instead gates **whole snippet files** with **regular expressions**, from one central setting.
 
-Current version: **v1.0.3**
+Current version: **v1.0.4**
 
 ---
 
@@ -159,7 +159,7 @@ The setting is resource-scoped: in a multi-root workspace, each folder's own `.v
 <a id="en-privacy"></a>
 ### 🔒 Data Storage & Privacy
 
-Everything happens locally. The extension reads only your `snipGate.rules` setting and the snippet files those rules point to. There is no telemetry, no cloud service, and no AI feature; file paths and snippet contents are **never** transmitted over any network. The extension stores nothing of its own.
+Everything happens locally. The extension reads only your `snipGate.rules` setting and the snippet files those rules point to. There is no telemetry, no cloud service, and no AI feature; file paths and snippet contents are **never** transmitted over any network. The extension stores nothing of its own. Snippet bodies use the full VS Code snippet syntax (tabstops and variables such as `$TM_FILENAME`), exactly like native project snippets — accepting a completion inserts the body with those substitutions applied.
 
 ---
 
@@ -200,7 +200,7 @@ npm run package      # build the VSIX (runs the version check first)
 
 標準のスニペットは言語で出し分けるもので、最近の VS Code ではスニペットごとに glob の `include`/`exclude` も書けます。SnipGate-Solo はそれとは別形状で、**正規表現**で **スニペットファイル丸ごと** を、1か所の設定から出し分けます。
 
-現在のバージョン: **v1.0.3**
+現在のバージョン: **v1.0.4**
 
 ---
 
@@ -341,7 +341,7 @@ npm run package      # build the VSIX (runs the version check first)
 <a id="ja-privacy"></a>
 ### 🔒 データの保存とプライバシー
 
-すべてローカルで処理します。この拡張が読むのは `snipGate.rules` 設定と、そのルールが指すスニペットファイルだけです。テレメトリ、クラウドサービス、AI 機能はなく、ファイルパスやスニペットの内容がネットワークに送信されることは **決してありません**。拡張自身が保存するデータもありません。
+すべてローカルで処理します。この拡張が読むのは `snipGate.rules` 設定と、そのルールが指すスニペットファイルだけです。テレメトリ、クラウドサービス、AI 機能はなく、ファイルパスやスニペットの内容がネットワークに送信されることは **決してありません**。拡張自身が保存するデータもありません。スニペットの本文は VS Code 標準のスニペット構文そのまま（タブストップや `$TM_FILENAME` などの変数を含む）で、標準のプロジェクトスニペットとまったく同じです。候補を受け入れると、それらの置換が適用された本文が挿入されます。
 
 ---
 

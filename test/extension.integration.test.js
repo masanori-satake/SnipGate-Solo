@@ -176,6 +176,49 @@ test('multi-root: different rules per folder stay separate', async () => {
   );
 });
 
+test('documentation is a plain string, not Markdown (no remote-image beacons)', async () => {
+  state = { folders: [SAMPLE], rulesByFolder: new Map([[SAMPLE, sampleRules]]) };
+  const items = await capturedProvider.provideCompletionItems(
+    makeDocument(path.join(SAMPLE, 'src/sample.test.ts'), 'typescript'),
+    { line: 0, character: 0 },
+  );
+  assert.ok(items.length > 0);
+  for (const item of items) {
+    assert.equal(typeof item.documentation, 'string');
+  }
+});
+
+test('oversized snippet file is skipped, not loaded', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rs-big-'));
+  fs.mkdirSync(path.join(root, '.vscode', 'snipgate'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  const big = JSON.stringify({ Big: { prefix: 'big', body: 'x'.repeat(1024 * 1024) } });
+  assert.ok(big.length > 1024 * 1024);
+  fs.writeFileSync(path.join(root, '.vscode', 'snipgate', 'big.code-snippets'), big);
+  const rules = [{ patterns: ['\\.ts$'], snippetFile: '.vscode/snipgate/big.code-snippets' }];
+  state = { folders: [root], rulesByFolder: new Map([[root, rules]]) };
+  assert.deepEqual(await labelsFor(path.join(root, 'src', 'a.ts'), 'typescript'), []);
+});
+
+test('a nested-quantifier pattern is rejected and does not stall or break other rules', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rs-redos-'));
+  fs.mkdirSync(path.join(root, '.vscode', 'snipgate'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, '.vscode', 'snipgate', 'ok.code-snippets'),
+    JSON.stringify({ Ok: { prefix: 'okp', body: '// ok' } }),
+  );
+  const rules = [
+    { patterns: ['([a-z]+)+\\.tsx$'], snippetFile: '.vscode/snipgate/ok.code-snippets' },
+    { patterns: ['\\.ts$'], snippetFile: '.vscode/snipgate/ok.code-snippets' },
+  ];
+  state = { folders: [root], rulesByFolder: new Map([[root, rules]]) };
+  const started = Date.now();
+  const labels = await labelsFor(path.join(root, 'src', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa.ts'), 'typescript');
+  assert.ok(Date.now() - started < 1000, 'matching returned promptly');
+  assert.deepEqual(labels, ['okp'], 'the healthy rule still supplies its snippet');
+});
+
 test('file outside any workspace folder gets nothing', async () => {
   state = { folders: [SAMPLE], rulesByFolder: new Map([[SAMPLE, sampleRules]]) };
   assert.deepEqual(await labelsFor('/tmp/nowhere/loose.ts', 'typescript'), []);
