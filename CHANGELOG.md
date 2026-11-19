@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.2] - 2026-11-19
+
+- Documentation only, no functional change: the README was restructured into the Solo series format — badges and a language switcher at the top, then the full English text followed by the full Japanese text with the same section structure in both languages (the 1.0.0 README carried only a short Japanese summary).
+
+---
+
+- ドキュメントのみの変更で、機能変更はありません：README を Solo シリーズの形式に再構成しました。冒頭にバッヂと言語切替を置き、English の全文に続いて Japanese の全文を、両言語で同じ節構成で載せています（1.0.0 の README は日本語が短いまとめだけでした）。
+
 ## [1.0.1] - 2026-11-19
 
 - Release infrastructure only, no functional change: added the `scripts/check-version.js` version-consistency check that the shared CI workflow runs (it was missing in 1.0.0, so the Code Quality workflow failed on the version-check step), plus the README version line it requires.

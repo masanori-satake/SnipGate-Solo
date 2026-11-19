@@ -71,7 +71,7 @@
     "check-version-bump": "node scripts/check-version.js --check-bump",
     "package": "npm run check-version && npx @vscode/vsce package"
   },
-  "version": "1.0.1",
+  "version": "1.0.2",
   "devDependencies": {
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
