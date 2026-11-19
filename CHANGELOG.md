@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.3] - 2026-11-19
+
+- Documentation only, no functional change: recorded the Kiro verification results (2026-11-19, performed by the author in Kiro with the prepared checklist — steps 1–6 all OK: gated candidates, silent skip, the show-matches verdicts, Kiro auto-loading files placed directly in `.vscode/` just like VS Code, and the native glob `include` behaving the same; the optional multi-root step is still unconfirmed). The README Roadmap and Requirements now state Kiro as verified, and the full results were appended to `docs/kiro-test-data.md`.
+
+---
+
+- ドキュメントのみの変更で、機能変更はありません：Kiro での検証結果を記録しました（2026-11-19、用意したチェックリストで本人が Kiro で実施 — 手順1〜6すべて OK：ゲートされた候補、黙ってスキップ、判定コマンドの出力、`.vscode/` 直下置きは Kiro でも VS Code と同様に自動読み込みされること、標準の glob `include` も同じ効き方をすること。任意のマルチルート手順だけ未確認）。README のロードマップと動作要件は Kiro を確認済みとし、結果の全文を `docs/kiro-test-data.md` に追記しました。
+
 ## [1.0.2] - 2026-11-19
 
 - Documentation only, no functional change: the README was restructured into the Solo series format — badges and a language switcher at the top, then the full English text followed by the full Japanese text with the same section structure in both languages (the 1.0.0 README carried only a short Japanese summary).

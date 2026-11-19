@@ -1,6 +1,6 @@
 # SnipGate-Solo
 
-[![Version](https://img.shields.io/badge/version-v1.0.2-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-v1.0.3-blue.svg)](package.json)
 [![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/masanori-satake.snipgate-solo.svg?label=Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=masanori-satake.snipgate-solo)
 [![Open VSX](https://img.shields.io/open-vsx/v/masanori-satake/snipgate-solo?label=Open%20VSX)](https://open-vsx.org/extension/masanori-satake/snipgate-solo)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/masanori-satake/SnipGate-Solo)](https://github.com/masanori-satake/SnipGate-Solo/releases)
@@ -18,7 +18,7 @@
 
 Standard snippets are scoped by language (and, in recent VS Code versions, by per-snippet glob `include`/`exclude`). SnipGate-Solo instead gates **whole snippet files** with **regular expressions**, from one central setting.
 
-Current version: **v1.0.2**
+Current version: **v1.0.3**
 
 ---
 
@@ -150,7 +150,7 @@ The setting is resource-scoped: in a multi-root workspace, each folder's own `.v
 <a id="en-requirements"></a>
 ### 📋 Requirements
 
-- **VS Code**: `v1.90.0` or later (also works in Kiro — verification in progress; see the Roadmap)
+- **VS Code**: `v1.90.0` or later; **Kiro**: verified working (2026-11-19, checklist steps 1–6 below in the Roadmap)
 - **OS**: Windows, macOS, Linux
 - No accounts, no API keys, no network access required.
 
@@ -166,7 +166,7 @@ Everything happens locally. The extension reads only your `snipGate.rules` setti
 <a id="en-roadmap"></a>
 ### 🧭 Roadmap
 
-- Kiro verification: the gate placement and candidate behaviour are confirmed on VS Code 1.147; the same checklist is being run in Kiro, including how Kiro treats files placed directly in `.vscode/` and the native glob `include`/`exclude`.
+- Kiro verification (done 2026-11-19): the same checklist passed in Kiro — gated snippets appear only in matching files, the silent skip works, files placed directly in `.vscode/` are auto-loaded by Kiro just like VS Code (so the subfolder placement matters there too), and the native glob `include` behaves the same. Only the optional multi-root step is still unconfirmed in Kiro.
 - If the core proves good in everyday use, editing aids for rules may follow. The first release deliberately targets users who write regular expressions; there is no rule editor.
 
 ---
@@ -200,7 +200,7 @@ npm run package      # build the VSIX (runs the version check first)
 
 標準のスニペットは言語で出し分けるもので、最近の VS Code ではスニペットごとに glob の `include`/`exclude` も書けます。SnipGate-Solo はそれとは別形状で、**正規表現**で **スニペットファイル丸ごと** を、1か所の設定から出し分けます。
 
-現在のバージョン: **v1.0.2**
+現在のバージョン: **v1.0.3**
 
 ---
 
@@ -332,7 +332,7 @@ npm run package      # build the VSIX (runs the version check first)
 <a id="ja-requirements"></a>
 ### 📋 動作要件
 
-- **VS Code**: `v1.90.0` 以降（Kiro でも動作します — 検証中。ロードマップ参照）
+- **VS Code**: `v1.90.0` 以降、**Kiro**: 動作確認済み（2026-11-19、ロードマップの手順1〜6）
 - **OS**: Windows、macOS、Linux
 - アカウント、API キー、ネットワーク接続は不要です。
 
@@ -348,7 +348,7 @@ npm run package      # build the VSIX (runs the version check first)
 <a id="ja-roadmap"></a>
 ### 🧭 ロードマップ
 
-- Kiro での検証：ゲートの置き場所と候補の挙動は VS Code 1.147 で確認済みです。同じチェックリストを Kiro でも実施中で、`.vscode/` 直下置きの扱いや標準の glob `include`/`exclude` が Kiro でどう効くかも含めて確認します。
+- Kiro での検証（2026-11-19 完了）：同じチェックリストが Kiro でも通りました。ゲートされたスニペットは合致したファイルでだけ出て、ファイル無しルールの黙ってスキップも動作。`.vscode/` 直下置きは Kiro でも VS Code と同様に自動読み込みされる（＝サブフォルダ置きが Kiro でも必要）ことと、標準の glob `include` も同じ効き方をすることが分かりました。未確認は任意のマルチルート手順だけです。
 - 中核が日常の利用で良いと確かめられたら、ルール編集の補助を検討します。初版は正規表現を書ける利用者を対象とし、ルールエディタは意図的に入れていません。
 
 ---

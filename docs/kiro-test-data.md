@@ -81,3 +81,12 @@ Kiro に SnipGate-Solo をインストールして試すための手順と期待
 
 手順ごとに「OK」か「NG（＋様子）」だけで十分です。
 例：「手順1〜3 OK、手順4は出なかった、手順6は出力先が分からなかった」
+
+## 実施結果（2026-11-19、佐竹が Kiro で実施）
+
+- 手順1〜6：すべて OK。手順6の出力は期待どおり
+  （rule 0 = ok・2 snippets、rule 1 = no-match、rule 2 = missing-file）。
+- 手順4の結論：Kiro も `.vscode/` 直下の `.code-snippets` を自動読み込みする
+  （VS Code と同じ）。サブフォルダ置きのゲートは Kiro でも有効。
+- 手順5の結論：標準の glob `include` も Kiro で VS Code と同じ効き方をする。
+- 手順7（マルチルート）：未実施（任意）。
