@@ -1,6 +1,6 @@
 # SnipGate-Solo
 
-[![Version](https://img.shields.io/badge/version-v1.0.4-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-v1.0.5-blue.svg)](package.json)
 [![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/masanori-satake.snipgate-solo.svg?label=Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=masanori-satake.snipgate-solo)
 [![Open VSX](https://img.shields.io/open-vsx/v/masanori-satake/snipgate-solo?label=Open%20VSX)](https://open-vsx.org/extension/masanori-satake/snipgate-solo)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/masanori-satake/SnipGate-Solo)](https://github.com/masanori-satake/SnipGate-Solo/releases)
@@ -18,7 +18,7 @@
 
 Standard snippets are scoped by language (and, in recent VS Code versions, by per-snippet glob `include`/`exclude`). SnipGate-Solo instead gates **whole snippet files** with **regular expressions**, from one central setting.
 
-Current version: **v1.0.4**
+Current version: **v1.0.5**
 
 ---
 
@@ -141,7 +141,7 @@ The repository's `sample-workspace/` folder is a ready-made fixture: open it, ty
 An array of rules. Each rule has:
 
 - `patterns`: array of regular-expression strings, tested against the workspace-relative file path with `/` separators (the same form on every OS). The rule matches when **any** pattern matches.
-- `snippetFile`: path of a `.code-snippets` file, relative to the workspace folder. Paths such as `../shared/common.code-snippets` are allowed.
+- `snippetFile`: path of a `.code-snippets` file, relative to the workspace folder. Paths such as `../shared/common.code-snippets` are allowed; when a rule resolves outside the workspace folder, a warning is written to the SnipGate-Solo output channel.
 
 The setting is resource-scoped: in a multi-root workspace, each folder's own `.vscode/settings.json` can carry its own rules, and each folder's rules are evaluated against that folder only.
 
@@ -200,7 +200,7 @@ npm run package      # build the VSIX (runs the version check first)
 
 標準のスニペットは言語で出し分けるもので、最近の VS Code ではスニペットごとに glob の `include`/`exclude` も書けます。SnipGate-Solo はそれとは別形状で、**正規表現**で **スニペットファイル丸ごと** を、1か所の設定から出し分けます。
 
-現在のバージョン: **v1.0.4**
+現在のバージョン: **v1.0.5**
 
 ---
 
@@ -323,7 +323,7 @@ npm run package      # build the VSIX (runs the version check first)
 ルールの配列です。各ルールは次の2つを持ちます。
 
 - `patterns`: 正規表現文字列の配列。ワークスペース相対パス（区切りは全 OS で `/`）に当てます。いずれか1つが合致すれば適用されます。
-- `snippetFile`: `.code-snippets` ファイルへのパス。ワークスペースフォルダからの相対パスで書きます。`../shared/common.code-snippets` のような書き方もできます。
+- `snippetFile`: `.code-snippets` ファイルへのパス。ワークスペースフォルダからの相対パスで書きます。`../shared/common.code-snippets` のような書き方もできます。フォルダの外へ解決されるルールについては、SnipGate-Solo の出力チャネルに警告が出ます。
 
 この設定はリソーススコープです。マルチルートではフォルダごとの `.vscode/settings.json` にそのフォルダのルールを書けます。各フォルダのルールは、そのフォルダの中でだけ判定されます。
 

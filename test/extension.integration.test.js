@@ -219,6 +219,76 @@ test('a nested-quantifier pattern is rejected and does not stall or break other 
   assert.deepEqual(labels, ['okp'], 'the healthy rule still supplies its snippet');
 });
 
+test('an overlapping-alternation pattern is rejected and does not stall or break other rules', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rs-redos2-'));
+  fs.mkdirSync(path.join(root, '.vscode', 'snipgate'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, '.vscode', 'snipgate', 'ok.code-snippets'),
+    JSON.stringify({ Ok: { prefix: 'okp', body: '// ok' } }),
+  );
+  const rules = [
+    { patterns: ['(a|aa)+$'], snippetFile: '.vscode/snipgate/ok.code-snippets' },
+    { patterns: ['\\.ts$'], snippetFile: '.vscode/snipgate/ok.code-snippets' },
+  ];
+  state = { folders: [root], rulesByFolder: new Map([[root, rules]]) };
+  const started = Date.now();
+  const labels = await labelsFor(path.join(root, 'src', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaa.ts'), 'typescript');
+  assert.ok(Date.now() - started < 1000, 'matching returned promptly');
+  assert.deepEqual(labels, ['okp'], 'the healthy rule still supplies its snippet');
+});
+
+test('a snippet file outside the workspace folder still loads, with a warning in the output', async () => {
+  const parent = fs.mkdtempSync(path.join(os.tmpdir(), 'rs-outside-'));
+  const root = path.join(parent, 'app');
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.writeFileSync(
+    path.join(parent, 'shared.code-snippets'),
+    JSON.stringify({ Shared: { prefix: 'sharedp', body: '// shared' } }),
+  );
+  const rules = [{ patterns: ['\\.ts$'], snippetFile: '../shared.code-snippets' }];
+  state = { folders: [root], rulesByFolder: new Map([[root, rules]]) };
+  const labels = await labelsFor(path.join(root, 'src', 'a.ts'), 'typescript');
+  assert.deepEqual(labels, ['sharedp'], 'outside references remain a working feature');
+  assert.ok(
+    outputLines.some((l) => l.includes('resolves outside the workspace folder')),
+    'a warning was written to the output channel',
+  );
+});
+
+test('rules beyond the cap are not evaluated', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rs-rulecap-'));
+  fs.mkdirSync(path.join(root, '.vscode', 'snipgate'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  fs.writeFileSync(
+    path.join(root, '.vscode', 'snipgate', 'ok.code-snippets'),
+    JSON.stringify({ Ok: { prefix: 'okp', body: '// ok' } }),
+  );
+  const rules = Array.from({ length: 64 }, () => ({
+    patterns: ['zzz-no-match'],
+    snippetFile: '.vscode/snipgate/ok.code-snippets',
+  }));
+  // The 65th rule would match, but it is beyond MAX_RULES (64).
+  rules.push({ patterns: ['\\.ts$'], snippetFile: '.vscode/snipgate/ok.code-snippets' });
+  state = { folders: [root], rulesByFolder: new Map([[root, rules]]) };
+  assert.deepEqual(await labelsFor(path.join(root, 'src', 'a.ts'), 'typescript'), []);
+});
+
+test('total offered snippets are capped', async () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'rs-snipcap-'));
+  fs.mkdirSync(path.join(root, '.vscode', 'snipgate'), { recursive: true });
+  fs.mkdirSync(path.join(root, 'src'), { recursive: true });
+  const many = {};
+  for (let i = 0; i < 1100; i += 1) {
+    many[`S${i}`] = { prefix: `p${i}`, body: '// x' };
+  }
+  fs.writeFileSync(path.join(root, '.vscode', 'snipgate', 'many.code-snippets'), JSON.stringify(many));
+  const rules = [{ patterns: ['\\.ts$'], snippetFile: '.vscode/snipgate/many.code-snippets' }];
+  state = { folders: [root], rulesByFolder: new Map([[root, rules]]) };
+  const labels = await labelsFor(path.join(root, 'src', 'a.ts'), 'typescript');
+  assert.equal(labels.length, 1024);
+});
+
 test('file outside any workspace folder gets nothing', async () => {
   state = { folders: [SAMPLE], rulesByFolder: new Map([[SAMPLE, sampleRules]]) };
   assert.deepEqual(await labelsFor('/tmp/nowhere/loose.ts', 'typescript'), []);
