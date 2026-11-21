@@ -36,10 +36,12 @@
             "properties": {
               "patterns": {
                 "items": {
+                  "maxLength": 512,
                   "minLength": 1,
                   "type": "string"
                 },
                 "markdownDescription": "%config.rules.patterns.description%",
+                "maxItems": 16,
                 "minItems": 1,
                 "type": "array"
               },
@@ -56,6 +58,7 @@
             "type": "object"
           },
           "markdownDescription": "%config.rules.description%",
+          "maxItems": 64,
           "scope": "resource",
           "type": "array"
         }
@@ -79,7 +82,7 @@
     "check-version-bump": "node scripts/check-version.js --check-bump",
     "package": "npm run check-version && npx @vscode/vsce package"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "devDependencies": {
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",

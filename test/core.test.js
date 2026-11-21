@@ -74,6 +74,86 @@ test('compilePatterns rejects overlong patterns', () => {
   assert.match(errors[0], /longer than 512/);
 });
 
+test('compilePatterns rejects adjacent quantified atoms with overlapping sets', () => {
+  // Shapes proven to stall the Extension Host (audit 2026-11-22): the
+  // engine can partition the input between the quantified atoms in
+  // exponentially many ways when they can match the same characters.
+  for (const bad of [
+    '.*.*.*.*b',
+    '[a-z]*[a-z]*[a-z]*$',
+    'a*a*a*a*b',
+    'a+a+$',
+    'a?a?b',
+    '\\w*\\d*b',
+  ]) {
+    const { regexes, errors } = core.compilePatterns([bad]);
+    assert.equal(regexes.length, 0, bad);
+    assert.equal(errors.length, 1, bad);
+    assert.match(errors[0], /adjacent quantified atoms/, bad);
+  }
+});
+
+test('compilePatterns rejects quantified groups with overlapping alternation', () => {
+  for (const bad of [
+    '(a|aa)+$',
+    '(x|x)+$',
+    '(a|aa)*',
+    '(ab|a)+',
+    '(\\d|\\d\\d)+',
+    '((a|aa))+',
+    '(foo|foobar)+\\.ts$',
+  ]) {
+    const { regexes, errors } = core.compilePatterns([bad]);
+    assert.equal(regexes.length, 0, bad);
+    assert.equal(errors.length, 1, bad);
+    assert.match(errors[0], /alternation branches/, bad);
+  }
+});
+
+test('compilePatterns keeps legitimate patterns that merely look similar', () => {
+  for (const good of [
+    '^.*\\.ts$', // one quantified atom, then literals
+    '(\\.test|\\.spec)\\.ts$', // overlapping branches, but the group is not quantified
+    '(foo|bar)+\\.ts$', // quantified group, disjoint branches
+    '(ab|ac)?x', // shared first character, but the group repeats at most once
+    '\\d{4}-\\d{2}-\\d{2}', // fixed-count quantifiers cannot repartition
+    'colou?r', // a single optional atom
+    'https?://',
+    'a{2,3}b',
+    '[a-z]*[0-9]*\\.ts$', // adjacent quantified atoms, disjoint sets
+    'x{2}y{3}',
+    '(a|b)*abb',
+    '[^/]+\\.ts$',
+    '^src/(components|pages)/[a-z]+\\.tsx$',
+  ]) {
+    const { regexes, errors } = core.compilePatterns([good]);
+    assert.equal(errors.length, 0, good);
+    assert.equal(regexes.length, 1, good);
+  }
+});
+
+test('validateRule rejects more than MAX_PATTERNS_PER_RULE patterns', () => {
+  const tooMany = {
+    patterns: Array.from({ length: core.MAX_PATTERNS_PER_RULE + 1 }, () => 'a'),
+    snippetFile: 'f',
+  };
+  assert.ok(core.validateRule(tooMany).some((p) => p.includes('at most')));
+  const atLimit = {
+    patterns: Array.from({ length: core.MAX_PATTERNS_PER_RULE }, () => 'a'),
+    snippetFile: 'f',
+  };
+  assert.deepEqual(core.validateRule(atLimit), []);
+});
+
+test('isInsidePath distinguishes folder-internal and external paths', () => {
+  assert.equal(core.isInsidePath('/ws/app', '/ws/app/.vscode/snipgate/x.code-snippets'), true);
+  assert.equal(core.isInsidePath('/ws/app', '/ws/app'), true);
+  assert.equal(core.isInsidePath('/ws/app', '/ws/shared/common.code-snippets'), false);
+  assert.equal(core.isInsidePath('/ws/app', '/ws/application/x'), false);
+  assert.equal(core.isInsidePath('C:\\ws\\app', 'C:/ws/app/x.code-snippets'), true);
+  assert.equal(core.isInsidePath('C:\\ws\\app', 'C:/ws/shared/x.code-snippets'), false);
+});
+
 test('ruleMatchesCompiled matches with pre-compiled regexes', () => {
   const { regexes } = core.compilePatterns(['\\.test\\.ts$']);
   assert.equal(core.ruleMatchesCompiled(regexes, 'src/a.test.ts'), true);

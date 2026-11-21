@@ -9,6 +9,29 @@ let output;
 const snippetCache = new Map(); // fsPath -> { mtimeMs, snippets }
 const failedFiles = new Map(); // fsPath -> mtimeMs of a version that failed to parse
 const loggedProblems = new Set(); // dedupe noisy logs
+const compiledPatternCache = new Map(); // JSON.stringify(patterns) -> { regexes, errors }
+const MAX_COMPILED_CACHE_ENTRIES = 256;
+
+/**
+ * Compile a rule's patterns, memoised by the patterns themselves:
+ * provideCompletionItems runs on essentially every keystroke, and
+ * recompiling every rule's patterns each time is wasted work (and, with
+ * many rules, a way for a shared workspace's settings to keep the
+ * Extension Host busy). Settings edits produce new pattern arrays,
+ * hence new cache keys, so changes still take effect immediately.
+ */
+function compilePatternsCached(patterns) {
+  const key = JSON.stringify(patterns);
+  let hit = compiledPatternCache.get(key);
+  if (!hit) {
+    hit = core.compilePatterns(patterns);
+    if (compiledPatternCache.size >= MAX_COMPILED_CACHE_ENTRIES) {
+      compiledPatternCache.clear();
+    }
+    compiledPatternCache.set(key, hit);
+  }
+  return hit;
+}
 
 // Real .code-snippets files are kilobytes. The cap keeps a rule that
 // (accidentally or maliciously) points at a huge workspace file from
@@ -83,17 +106,26 @@ async function evaluateDocument(document) {
     path.relative(folder.uri.fsPath, document.uri.fsPath),
   );
   const config = vscode.workspace.getConfiguration('snipGate', document.uri);
-  const rules = config.get('rules', []);
+  const configuredRules = config.get('rules', []);
+  const allRules = Array.isArray(configuredRules) ? configuredRules : [];
+  if (allRules.length > core.MAX_RULES) {
+    logOnce(
+      'rules-truncated',
+      `${allRules.length} rules are configured; only the first ${core.MAX_RULES} are evaluated`,
+    );
+  }
+  const rules = allRules.slice(0, core.MAX_RULES);
   const evaluations = [];
+  let totalSnippets = 0;
 
-  for (const [index, rule] of (Array.isArray(rules) ? rules : []).entries()) {
+  for (const [index, rule] of rules.entries()) {
     const problems = core.validateRule(rule);
     if (problems.length > 0) {
       logOnce(`rule-${index}-invalid`, `[rule ${index}] skipped: ${problems.join('; ')}`);
       evaluations.push({ rule, matched: false, status: 'invalid-rule', snippets: [] });
       continue;
     }
-    const { regexes, errors } = core.compilePatterns(rule.patterns);
+    const { regexes, errors } = compilePatternsCached(rule.patterns);
     for (const error of errors) {
       logOnce(`rule-${index}-${error}`, `[rule ${index}] ${error}`);
     }
@@ -102,6 +134,15 @@ async function evaluateDocument(document) {
       continue;
     }
     const snippetFsPath = core.joinSnippetPath(folder.uri.fsPath, rule.snippetFile);
+    if (!core.isInsidePath(folder.uri.fsPath, snippetFsPath)) {
+      // Pointing outside the folder is an intentional feature (shared
+      // snippet files), but it must never happen silently: the user may
+      // not realise a cloned workspace's rules read files elsewhere.
+      logOnce(
+        `outside-${snippetFsPath}`,
+        `[rule ${index}] warning: snippetFile "${rule.snippetFile}" resolves outside the workspace folder: ${snippetFsPath}`,
+      );
+    }
     let snippets;
     try {
       snippets = await loadSnippets(snippetFsPath);
@@ -132,6 +173,14 @@ async function evaluateDocument(document) {
       evaluations.push({ rule, matched: true, status: 'missing-file', snippets: [] });
       continue;
     }
+    if (totalSnippets + snippets.length > core.MAX_TOTAL_SNIPPETS) {
+      logOnce(
+        'snippets-truncated',
+        `more than ${core.MAX_TOTAL_SNIPPETS} snippets matched; the excess is not offered`,
+      );
+      snippets = snippets.slice(0, Math.max(0, core.MAX_TOTAL_SNIPPETS - totalSnippets));
+    }
+    totalSnippets += snippets.length;
     evaluations.push({ rule, matched: true, status: 'ok', snippets });
   }
   return { relPath, folder, evaluations };
@@ -230,6 +279,7 @@ function activate(context) {
       snippetCache.clear();
       failedFiles.clear();
       loggedProblems.clear();
+      compiledPatternCache.clear();
       void vscode.window.showInformationMessage('SnipGate: snippet cache cleared.');
     }),
   );
