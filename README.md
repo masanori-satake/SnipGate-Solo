@@ -1,6 +1,6 @@
 # SnipGate-Solo
 
-[![Version](https://img.shields.io/badge/version-v1.0.5-blue.svg)](package.json)
+[![Version](https://img.shields.io/badge/version-v1.0.6-blue.svg)](package.json)
 [![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/masanori-satake.snipgate-solo.svg?label=Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=masanori-satake.snipgate-solo)
 [![Open VSX](https://img.shields.io/open-vsx/v/masanori-satake/snipgate-solo?label=Open%20VSX)](https://open-vsx.org/extension/masanori-satake/snipgate-solo)
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/masanori-satake/SnipGate-Solo)](https://github.com/masanori-satake/SnipGate-Solo/releases)
@@ -18,7 +18,7 @@
 
 Standard snippets are scoped by language (and, in recent VS Code versions, by per-snippet glob `include`/`exclude`). SnipGate-Solo instead gates **whole snippet files** with **regular expressions**, from one central setting.
 
-Current version: **v1.0.5**
+Current version: **v1.0.6**
 
 ---
 
@@ -200,7 +200,7 @@ npm run package      # build the VSIX (runs the version check first)
 
 標準のスニペットは言語で出し分けるもので、最近の VS Code ではスニペットごとに glob の `include`/`exclude` も書けます。SnipGate-Solo はそれとは別形状で、**正規表現**で **スニペットファイル丸ごと** を、1か所の設定から出し分けます。
 
-現在のバージョン: **v1.0.5**
+現在のバージョン: **v1.0.6**
 
 ---
 
