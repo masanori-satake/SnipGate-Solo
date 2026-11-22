@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.6] - 2026-11-22
+
+- Development-configuration alignment (no feature changes): `.markdownlint.json` is now excluded from the version-bump check in `scripts/check-version.js` (the same treatment as `.pre-commit-config.yaml`), and the pre-commit hooks fixed missing final newlines in the sample and test workspace settings files.
+
+---
+
+- 開発用設定の整備です（機能変更はありません）。`scripts/check-version.js` の版バンプ判定で `.markdownlint.json` を対象外にしました（`.pre-commit-config.yaml` と同じ扱い）。あわせて、サンプル／テスト用ワークスペースの設定ファイルに不足していた末尾の改行を、pre-commit フックで直しました。
+
 ## [1.0.5] - 2026-11-22
 
 - Security hardening from the 2026-11-22 audit (no feature changes): the ReDoS guard now rejects two more catastrophic-backtracking shapes that the nested-quantifier check missed and that were proven to stall the shared Extension Host for seconds — adjacent quantified atoms that can match overlapping characters (e.g. `a*a*a*a*b`, `[a-z]*[a-z]*[a-z]*$`, `.*.*.*.*b`) and quantified groups whose alternation branches can start with the same character or where one branch is a prefix of another (e.g. `(a|aa)+$`, `(x|x)+$`). Settings size is now capped (64 rules, 16 patterns per rule, 1024 snippets in total; the limits are also declared as `maxItems`/`maxLength` in the settings schema), and compiled patterns are cached per rule so completion requests no longer recompile every rule on every keystroke. A rule whose `snippetFile` resolves outside the workspace folder (still allowed, e.g. `../shared/common.code-snippets`) now writes an explicit warning to the output channel instead of reading the file silently.
